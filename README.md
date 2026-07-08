@@ -4,7 +4,7 @@ A cute, dead-simple **FFmpeg GUI** — OLED-black, pride-rainbow, and fast. Conv
 make GIFs, and download from YouTube & friends, with hardware-accelerated (NVENC) encoding under the
 hood. No command line, no settings soup.
 
-![OLED dark + RGB](src-tauri/icons/icon.png)
+![Catverter — converting a video](docs/screenshot.png)
 
 ## Download
 
