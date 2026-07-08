@@ -1,0 +1,30 @@
+[package]
+name = "catverter"
+version = "0.1.0"
+description = "A cute, simple OLED-dark GUI for FFmpeg"
+authors = ["Freya"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-notification = "2"
+tauri-plugin-updater = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rfd = "0.15"
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "rustls-tls"] }
+zip = "2"
+dirs = "5"
+base64 = "0.22"
+trash = "5"
+
+[profile.dev]
+incremental = true
+
+[profile.release]
+opt-level = "s"
+lto = true
+strip = true

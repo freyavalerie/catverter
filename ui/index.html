@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Catverter</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-app="convert">
+  <div id="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">
+          <svg viewBox="0 0 48 48" width="34" height="34" aria-hidden="true">
+            <defs>
+              <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#E40303" />
+                <stop offset="0.2" stop-color="#FF8C00" />
+                <stop offset="0.4" stop-color="#FFED00" />
+                <stop offset="0.6" stop-color="#008026" />
+                <stop offset="0.8" stop-color="#004CFF" />
+                <stop offset="1" stop-color="#732982" />
+              </linearGradient>
+            </defs>
+            <path d="M18 14 L36 24 L18 34 Z" fill="url(#lg)" />
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>Catverter</h1>
+          <span class="tag">simple ffmpeg, dressed up</span>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button class="app-update-pill hidden" id="appUpdatePill" title="A new version of Catverter is available">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>
+          <span id="appUpdateText">Update</span>
+        </button>
+        <div class="ff-badge" id="ffBadge"><span class="dot"></span><span id="ffText">checking…</span></div>
+      </div>
+    </header>
+
+    <!-- app mode: convert vs youtube -->
+    <div class="modes two appmode" id="appModeSwitch">
+      <button class="modebtn active" data-app="convert">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3l4 4-4 4"/><path d="M20 7H6"/><path d="M8 21l-4-4 4-4"/><path d="M4 17h14"/></svg>
+        Convert
+      </button>
+      <button class="modebtn" data-app="youtube">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7L12 19"/></svg>
+        Download
+      </button>
+      <div class="mode-glow" id="appModeGlow"></div>
+    </div>
+
+    <main>
+      <!-- SOURCE: convert -->
+      <button class="upload-prompt convert-only single-only" id="uploadPrompt">
+        <span class="up-glyph">
+          <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m6 10 6-6 6 6"/><path d="M4 20h16"/></svg>
+        </span>
+        <span class="up-title">Choose videos to convert</span>
+        <span class="up-sub">drop files anywhere — several at once becomes a queue</span>
+      </button>
+
+      <section class="filecard convert-only single-only hidden" id="fileCard">
+        <div class="thumb" id="thumb">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m22 8-6 4 6 4V8Z"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg>
+        </div>
+        <div class="fileinfo">
+          <div class="filename" id="fileName">—</div>
+          <div class="chips" id="metaChips"></div>
+        </div>
+        <div class="filecard-actions">
+          <button class="ghost" id="changeFile">Change</button>
+        </div>
+      </section>
+
+      <!-- SOURCE: convert batch -->
+      <section class="batch-list convert-only batch-only" id="batchList">
+        <div class="batch-head">
+          <span class="batch-count" id="batchCount">0 files</span>
+          <div class="batch-actions">
+            <button class="ghost tiny" id="batchAdd">Add files</button>
+            <button class="ghost tiny" id="batchClear">Clear</button>
+          </div>
+        </div>
+        <div class="batch-rows" id="batchRows"></div>
+      </section>
+
+      <!-- SOURCE: youtube -->
+      <section class="yt-source youtube-only" id="ytSource">
+        <input type="text" id="ytUrl" class="yt-input" placeholder="Paste a link — YouTube, TikTok, X, Twitch…" spellcheck="false" autocomplete="off" />
+        <div class="yt-fetching hidden" id="ytFetching">Reading video…</div>
+        <div class="yt-info hidden" id="ytInfo">
+          <img id="ytThumb" alt="" />
+          <div class="yt-info-text">
+            <div class="yt-title" id="ytTitle"></div>
+            <div class="chips" id="ytChips"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SHARED CONTROLS -->
+      <section class="controls" id="controls">
+        <div class="modes" id="modes">
+          <button class="modebtn active" data-mode="video">Video</button>
+          <button class="modebtn" data-mode="audio">Audio</button>
+          <button class="modebtn" data-mode="gif">GIF</button>
+          <div class="mode-glow" id="modeGlow"></div>
+        </div>
+
+        <div class="group" id="resGroup">
+          <label id="resLabel">Resolution</label>
+          <div class="pills" id="resPills">
+            <button data-res="source" class="pill active" id="resFirstPill">Source</button>
+            <button data-res="2160" class="pill">2160p</button>
+            <button data-res="1440" class="pill">1440p</button>
+            <button data-res="1080" class="pill">1080p</button>
+            <button data-res="720" class="pill">720p</button>
+            <button data-res="480" class="pill">480p</button>
+            <button data-res="360" class="pill">360p</button>
+          </div>
+        </div>
+
+        <div class="mode-panel" id="panel-video">
+          <div class="group">
+            <label>Format</label>
+            <div class="pills" id="fmtPills">
+              <button data-fmt="mp4_h265" class="pill active">MP4</button>
+              <button data-fmt="webm" class="pill">WebM</button>
+            </div>
+          </div>
+
+          <div class="group convert-only">
+            <label>How to size it</label>
+            <div class="pills" id="sizeMode">
+              <button data-size="quality" class="pill active">Quality</button>
+              <button data-size="target" class="pill">Target size</button>
+            </div>
+            <div id="qualityRow" class="pills sub">
+              <button data-q="high" class="pill">Best looking</button>
+              <button data-q="balanced" class="pill active">Balanced</button>
+              <button data-q="small" class="pill">Small file</button>
+            </div>
+            <div id="targetRow" class="target hidden">
+              <div class="pills sub">
+                <button data-mb="8" class="pill">8 MB</button>
+                <button data-mb="10" class="pill">10 MB · Discord</button>
+                <button data-mb="25" class="pill active">25 MB</button>
+                <button data-mb="50" class="pill">50 MB</button>
+              </div>
+              <div class="slider-row">
+                <input type="range" id="mbSlider" min="2" max="500" value="25" />
+                <div class="mb-readout"><span id="mbValue">25</span> MB</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mode-panel hidden convert-only" id="panel-audio">
+          <div class="group">
+            <label>Audio format</label>
+            <div class="pills" id="audioPills">
+              <button data-af="mp3" class="pill active">MP3</button>
+              <button data-af="m4a" class="pill">M4A · AAC</button>
+              <button data-af="wav" class="pill">WAV · lossless</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mode-panel hidden convert-only" id="panel-gif">
+          <div class="group">
+            <label>Frames per second · <span id="fpsValue">15</span> fps</label>
+            <div class="slider-row">
+              <input type="range" id="fpsSlider" min="5" max="30" value="15" />
+            </div>
+          </div>
+          <div class="group">
+            <label>Quality · <span id="gifQValue">Balanced</span></label>
+            <div class="slider-row">
+              <input type="range" id="gifQSlider" min="1" max="5" value="3" />
+            </div>
+            <p class="hint">Higher = more colors &amp; smoother dithering (bigger file). Lower = smaller, more banding.</p>
+          </div>
+        </div>
+
+        <!-- trim (shared, collapsible) -->
+        <div class="group trim-group single-only">
+          <button class="trim-toggle" id="trimToggle" aria-expanded="false">
+            <span class="tt-left">
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
+              Trim clip
+            </span>
+            <span class="readout" id="trimReadout"></span>
+            <svg class="tt-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="trim-panel hidden" id="trimPanel">
+            <div class="trim-stage" id="trimStage">
+              <div class="frame-wrap big">
+                <img id="thumbView" alt="preview frame" />
+                <span class="frame-tag" id="thumbTag">IN · 0:00</span>
+              </div>
+            </div>
+            <div class="dualrange" id="dualrange">
+              <div class="track"></div>
+              <div class="track-fill" id="trackFill"></div>
+              <input type="range" id="trimStart" min="0" max="1000" value="0" />
+              <input type="range" id="trimEnd" min="0" max="1000" value="1000" />
+            </div>
+            <div class="trim-times">
+              <span id="trimStartLabel">0:00</span>
+              <button class="ghost tiny" id="trimReset">Reset</button>
+              <span id="trimEndLabel">0:00</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- output (convert) -->
+        <div class="outrow convert-only single-only" id="outRow">
+          <div class="out-left">
+            <span class="out-label">Saves as</span>
+            <span class="out-name" id="outName">—</span>
+          </div>
+          <div class="out-right">
+            <span class="size-est" id="sizeEstimate">—</span>
+            <button class="ghost" id="changeOut">Change…</button>
+          </div>
+        </div>
+
+        <!-- output folder (convert queue) -->
+        <div class="outrow convert-only batch-only" id="batchOutRow">
+          <div class="out-left">
+            <span class="out-label">Saves to</span>
+            <span class="out-name" id="batchOutName">Same folder as each file</span>
+          </div>
+          <div class="out-right">
+            <button class="ghost tiny hidden" id="batchOutReset">Same folder</button>
+            <button class="ghost" id="batchOutChange">Change…</button>
+          </div>
+        </div>
+
+        <!-- delete original (convert, incl. batch) -->
+        <div class="delorig convert-only">
+          <button class="del-toggle" id="delOrigBtn" aria-pressed="false" title="After a successful convert: the converted file is saved next to the original (kept as name_Catverter), and the original goes to the Recycle Bin">
+            <span class="del-box"></span>
+            Delete original after converting
+            <span class="del-note">· keeps the _Catverter file · original goes to the Recycle Bin</span>
+          </button>
+        </div>
+
+        <!-- save note (youtube) -->
+        <div class="yt-savenote youtube-only" id="ytSaveNote">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+          <span id="ytSizeEst" class="yt-size"></span>saves to your <b>Downloads</b> folder
+        </div>
+
+        <button class="convert" id="convertBtn"><span class="convert-label">Convert</span></button>
+      </section>
+    </main>
+  </div>
+
+  <!-- progress overlay (shared) -->
+  <div class="overlay hidden" id="progressOverlay">
+    <div class="overlay-card">
+      <div class="ring">
+        <svg viewBox="0 0 120 120" width="150" height="150">
+          <defs>
+            <linearGradient id="ringg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#E40303" />
+              <stop offset="0.2" stop-color="#FF8C00" />
+              <stop offset="0.4" stop-color="#FFED00" />
+              <stop offset="0.6" stop-color="#008026" />
+              <stop offset="0.8" stop-color="#004CFF" />
+              <stop offset="1" stop-color="#732982" />
+            </linearGradient>
+          </defs>
+          <circle class="ring-bg" cx="60" cy="60" r="52" />
+          <circle class="ring-fg" id="ringFg" cx="60" cy="60" r="52" />
+        </svg>
+        <div class="ring-pct"><span class="ring-pct-bg">%</span><span id="pctValue">0</span></div>
+      </div>
+      <div class="prog-meta">
+        <div class="prog-title" id="progTitle">Converting…</div>
+        <div class="prog-sub" id="progSub">warming up the encoder</div>
+      </div>
+      <button class="ghost danger" id="cancelBtn">Cancel</button>
+    </div>
+  </div>
+
+  <!-- done overlay (shared) -->
+  <div class="overlay hidden" id="doneOverlay">
+    <div class="overlay-card">
+      <div class="success-mark">
+        <svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      </div>
+      <div class="prog-title">All done ✨</div>
+      <div class="prog-sub" id="doneSub">your file is ready</div>
+      <div class="vmaf-result hidden" id="vmafResult"></div>
+      <div class="done-actions">
+        <button class="btn-primary" id="revealBtn">Show in folder</button>
+        <button class="ghost hidden" id="vmafBtn">Check quality</button>
+        <button class="ghost" id="againBtn">Convert another</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ffmpeg setup overlay -->
+  <div class="overlay hidden" id="setupOverlay">
+    <div class="overlay-card">
+      <div class="prog-title">One-time setup</div>
+      <div class="prog-sub" id="setupSub">Catverter needs FFmpeg — the engine that does the converting. Want me to grab it? (~160&nbsp;MB, one&#8209;time)</div>
+      <div class="setup-bar hidden" id="setupBarWrap"><div class="setup-fill" id="setupFill"></div></div>
+      <div class="done-actions">
+        <button class="btn-primary" id="dlBtn">Download FFmpeg</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

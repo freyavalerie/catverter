@@ -1,0 +1,56 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Catverter",
+  "version": "0.1.0",
+  "identifier": "com.freyavalerie.catverter",
+  "build": {
+    "frontendDist": "../ui"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "Catverter",
+        "width": 1120,
+        "height": 780,
+        "minWidth": 760,
+        "minHeight": 520,
+        "resizable": true,
+        "decorations": true,
+        "dragDropEnabled": true,
+        "theme": "Dark",
+        "backgroundColor": "#000000"
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis"
+    ],
+    "createUpdaterArtifacts": true,
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDM2OEI0Q0E1RUZDRThDNzcKUldSM2pNN3ZwVXlMTmxld1czUGNnVmZYdmpYVmFoTys2RnlpeUtZYjNaNVdOOGdzL3BJaGUzcjUK",
+      "endpoints": [
+        "https://github.com/freyavalerie/catverter/releases/latest/download/latest.json"
+      ]
+    }
+  }
+}
